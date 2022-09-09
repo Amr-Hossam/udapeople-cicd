@@ -47,6 +47,7 @@ jobs:
             npm install
             npm update
             npm --version
+            npm start
       # - run:
       #     name: Build front-end
       #     command: |
