@@ -46,6 +46,9 @@ jobs:
             cd frontend
             npm install
             npm update
+      - run:
+          name: step 2 Build front-end
+          command: |
             npm start
             npm run build
       - save_cache:
@@ -73,7 +76,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [frontend-build]
       - run:
           name: front-end unit test
           command: |
@@ -283,10 +286,10 @@ workflows:
     jobs:
       - build-frontend
       - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
+      # - test-frontend:
+      #     requires: [build-frontend]
+      # - test-backend:
+      #     requires: [build-backend]
       # - scan-backend:
       #     requires: [build-backend]
       # - scan-frontend:
