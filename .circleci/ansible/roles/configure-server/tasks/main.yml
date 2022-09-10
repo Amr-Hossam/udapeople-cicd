@@ -11,18 +11,21 @@
   npm:
     name: n
     global: yes
-    
-- name: "Add Node.js"
-  become: true
-  shell: |
-    curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 
-- name: "Install Node.js 13"
+# - name: "Add Node.js"
+#   become: true
+#   shell: |
+#     curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+
+# - name: "Install Node.js 13"
+#   become: true
+#   apt: 
+#     name: ["nodejs"]
+#     state: latest
+#     update_cache: yes
+- name: install nodejs v13.8.0
   become: true
-  apt: 
-    name: ["nodejs"]
-    state: latest
-    update_cache: yes
+  command: n 13.8.0
 
 - name: "Install PM2"
   npm:
