@@ -19,9 +19,9 @@ commands:
           name: Install ansible for ubuntu
           command: |
              sudo apt update
-             sudo apt install software-properties-common
+             sudo apt install software-properties-common -y
              sudo add-apt-repository --yes --update ppa:ansible/ansible
-             sudo apt install ansible
+             sudo apt install ansible -y
 
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -54,34 +54,34 @@ commands:
   #             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.Workflow_ID>>
 
   revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
+    description: Revert the last migration
     parameters:
       Workflow_ID:
-        type: string 
-        default: ${CIRCLE_WORKFLOW_ID:0:7}    
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
       - run:
           name: Revert migrations
           when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(curl --insecure https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
-            if (( $SUCCESS==1 )); 
+            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
+            # Logic for reverting the database state
+            if (( $SUCCESS == 1 ));
             then
               cd ~/project/backend
               npm install
               npm run migration:revert
             fi
 
-  # install_nodejs:
-  ### /.circleci/ansible/configure-server/tasks/main.yml
-  #   description: Install Node.js 13
-  #   steps:
-  #     - run:
-  #         name: Install Node.js 13
-  #         command: |
-  #           curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-  #           sudo apt install -y nodejs            
+  install_nodejs:
+  ## /.circleci/ansible/configure-server/tasks/main.yml
+    description: Install Node.js 13
+    steps:
+      - run:
+          name: Install Node.js 13
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+            sudo apt install -y nodejs            
 jobs:
   build-frontend:
     docker:
@@ -243,7 +243,7 @@ jobs:
       - image: cimg/node:13.8.0
     steps:
       - checkout
-      - install_awscli 
+      - install_awscli
       - run:
           name: Run migrations
           command: |
@@ -251,37 +251,49 @@ jobs:
             npm install
             npm run migrations > migrations_dump.txt
       - run:
-          name: Send migration results to kvdb.io
+          name: Send migration status to kvdb.io
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-             curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
+              curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi   
      # Here's where you will add some code to rollback on failure      
       - destroy-environment
       - revert-migrations
 
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure      
+  deploy-frontend:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_awscli
+      - install_nodejs
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            npm install
+      - run:
+          name: Get backend url
+          command: |
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            echo "API_URL=http://${BACKEND_PUBLIC_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm run build
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - destroy-environment
+      - revert-migrations
+      # Here's where you will add some code to rollback on failure      
                     
 #   deploy-backend:
 #     docker:
