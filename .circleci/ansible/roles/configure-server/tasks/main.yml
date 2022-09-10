@@ -1,4 +1,17 @@
 ---
+- name: "installing npm"
+  become: true
+  apt:
+    name: npm
+    update_cache: yes
+    state: latest
+
+- name: Install nvm
+  become: true
+  npm:
+    name: n
+    global: yes
+    
 - name: "Add Node.js"
   become: true
   shell: |
@@ -15,3 +28,4 @@
   npm:
     name: pm2
     global: yes
+    state: present
