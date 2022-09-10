@@ -57,7 +57,8 @@ commands:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
       Workflow_ID:
-        type: string     
+        type: string 
+        default: ${CIRCLE_WORKFLOW_ID:0:7}    
     steps:
       - run:
           name: Revert migrations
@@ -255,9 +256,7 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
              curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
-            fi
-
-            
+            fi   
      # Here's where you will add some code to rollback on failure      
       - destroy-environment
       - revert-migrations
