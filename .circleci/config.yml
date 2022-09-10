@@ -46,16 +46,7 @@ jobs:
             cd frontend
             npm install
             npm update
-            npm --version
-            npm start
-      # - run:
-      #     name: Build front-end
-      #     command: |
-      #       cd frontend
-      #       npm install
-      #       npm update
-      #       npm start
-      #       npm run build
+            npm run build
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
