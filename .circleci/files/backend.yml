@@ -11,7 +11,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub UdaPeople-${ID}
-      GroupDescription: Allow port 22 , port 3030 for node server , 9100 for prometheus and 5432 for RDS.
+      GroupDescription: Allow port 22 , port 3030 for node server , 9100 for prometheus .
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -40,3 +40,5 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}
+        - key: Project
+          Value: Udapeople
